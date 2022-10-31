@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 class CustomAnimatedText extends StatefulWidget {
   final String text;
   final IconData? icon;
-  const CustomAnimatedText({Key? key, required this.text, this.icon}) : super(key: key);
+  const CustomAnimatedText({Key? key, required this.text, this.icon})
+      : super(key: key);
   static const title = 'Custom Animated Text';
 
   @override
@@ -40,21 +41,23 @@ class _CustomAnimatedTextState extends State<CustomAnimatedText>
         builder: (context, child) {
           return Transform.translate(
             offset: Offset(textAnimation.value * 2, 0),
-            child: widget.icon != null ? Transform.translate(
-              offset: const Offset(0.0, 14.0),
-              child: Icon(
-                    widget.icon,
-                    size: 26,
-                    color: const Color(0xFF9d7fff),
+            child: widget.icon != null
+                ? Transform.translate(
+                    offset: const Offset(0.0, 14.0),
+                    child: Icon(
+                      widget.icon,
+                      size: 26,
+                      color: const Color(0xFF9d7fff),
+                    ),
+                  )
+                : Text(
+                    widget.text,
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyMedium!.color,
+                    ),
                   ),
-            ) : Text(
-              widget.text,
-              style: const TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
           );
         });
   }

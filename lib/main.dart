@@ -1,9 +1,33 @@
+import 'dart:io';
+
+import 'package:fastest_finger_calculator/Calculator/application/theme_state.dart';
+import 'package:fastest_finger_calculator/Calculator/main_calculator_web.dart';
+import 'package:fastest_finger_calculator/core/theme/theme_data.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'Calculator/main_calculator.dart';
+import 'Calculator/main_calculator_desktop.dart';
 
 void main() {
-  runApp(const MyApp());
+  // if (!kIsWeb && (Platform.isMacOS || Platform.isLinux || Platform.isWindows)) {
+  //   setWindowTitle('Fastest Finger Calculator');
+  //   setWindowMinSize(const Size(587.0, 0.0));
+  //   setWindowMaxSize(Size.infinite);
+  // }
+  // if (!kIsWeb) {
+  //   setWindowTitle('Fastest Finger Calculator');
+  //   setWindowMinSize(const Size(587.0, 700.0));
+  //   // setWindowMaxSize(Size.infinite);
+  //   setWindowMaxSize(const Size(587.0, 900.0));
+  // }
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeState(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -12,14 +36,16 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const EntryPoint(),
-      debugShowCheckedModeBanner: false,
-    );
+    return Consumer<ThemeState>(builder: (context, themeState, child) {
+      return MaterialApp(
+        title: 'Flutter Demo',
+        theme: themeState.isDark ? themeDark : themeLight,
+        //darkTheme: themeDark,
+        //themeMode: ThemeMode.system,
+        home: const EntryPoint(),
+        debugShowCheckedModeBanner: false,
+      );
+    });
   }
 }
 
@@ -33,8 +59,62 @@ class EntryPoint extends StatefulWidget {
 class _EntryPointState extends State<EntryPoint> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: MainCalculator(),
-    );
+    if (kIsWeb) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF674CE8),
+        body: Center(
+          child: FractionallySizedBox(
+            widthFactor: MediaQuery.of(context).size.width <= 700 ? null : 0.5,
+            heightFactor:
+                MediaQuery.of(context).size.width <= 700 ? null : 0.95,
+            alignment: FractionalOffset.center,
+            child: const MainCalculatorWeb(),
+          ),
+        ),
+      );
+    } else if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+      return Scaffold(
+        drawer: Drawer(
+          // Add a ListView to the drawer. This ensures the user can scroll
+          // through the options in the drawer if there isn't enough vertical
+          // space to fit everything.
+          child: ListView(
+            // Important: Remove any padding from the ListView.
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
+                child: Text('Drawer Header'),
+              ),
+              ListTile(
+                title: const Text('Item 1'),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('Item 2'),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ),
+        body: const MainCalculatorDesktop(),
+      );
+    } else {
+      return const Scaffold(
+        body: MainCalculator(),
+      );
+    }
   }
 }

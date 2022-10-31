@@ -1,5 +1,6 @@
 import 'package:fastest_finger_calculator/Calculator/custom_text_animation.dart';
 import 'package:fastest_finger_calculator/Calculator/ripple_animation.dart';
+import 'package:fastest_finger_calculator/Calculator/widgets/custom_switch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
@@ -35,7 +36,8 @@ class _MainCalculatorState extends State<MainCalculator> {
               // color: Colors.grey[100],
               decoration: BoxDecoration(
                 // this hide in mobile
-                color: Colors.grey[100],
+                // color: Colors.grey[100],
+                color: Theme.of(context).backgroundColor,
                 borderRadius: const BorderRadius.all(Radius.circular(35)),
               ),
               padding: const EdgeInsets.only(top: 90, left: 10, right: 18),
@@ -51,10 +53,11 @@ class _MainCalculatorState extends State<MainCalculator> {
                   isCalculated
                       ? Text(
                           calculatedValue.toString(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 40,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color:
+                                Theme.of(context).textTheme.bodyMedium!.color,
                           ),
                         )
                       : const SizedBox(),
@@ -71,9 +74,9 @@ class _MainCalculatorState extends State<MainCalculator> {
                 top: 30.0,
                 bottom: 30.0,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20.0),
                   topRight: Radius.circular(20.0),
                   //bottomLeft: Radius.circular(35.0), // this hide in mobile
@@ -397,6 +400,11 @@ class _MainCalculatorState extends State<MainCalculator> {
               ),
             ),
           ),
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.05,
+            left: MediaQuery.of(context).size.width * 0.3,
+            child: const SwitchBtn(),
+          )
         ],
       ),
     );
@@ -457,8 +465,9 @@ class _MainCalculatorState extends State<MainCalculator> {
           ),
           child: CircleAvatar(
             radius: 35,
-            backgroundColor:
-                isEqualsBtn ? const Color(0xFF9d7fff) : Colors.grey[100],
+            backgroundColor: isEqualsBtn
+                ? const Color(0xFF9d7fff)
+                : Theme.of(context).cardColor,
             child: isSign
                 ? Icon(
                     icon ?? Icons.add,
@@ -469,7 +478,11 @@ class _MainCalculatorState extends State<MainCalculator> {
                     text ?? '',
                     style: TextStyle(
                       fontSize: 40,
-                      color: isEqualsBtn ? Colors.white : color,
+                      color: isEqualsBtn
+                          ? Colors.white
+                          : isClearBtn
+                              ? const Color(0xFF9d7fff)
+                              : Theme.of(context).textTheme.bodyMedium!.color,
                     ),
                   ),
           ),
