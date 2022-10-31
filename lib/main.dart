@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fastest_finger_calculator/Calculator/application/calculator_state.dart';
 import 'package:fastest_finger_calculator/Calculator/application/theme_state.dart';
 import 'package:fastest_finger_calculator/Calculator/main_calculator_web.dart';
 import 'package:fastest_finger_calculator/core/theme/theme_data.dart';
@@ -23,8 +24,11 @@ void main() {
   //   setWindowMaxSize(const Size(587.0, 900.0));
   // }
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeState(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeState()),
+        ChangeNotifierProvider(create: (context) => CalculatorState()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -61,6 +65,41 @@ class _EntryPointState extends State<EntryPoint> {
   Widget build(BuildContext context) {
     if (kIsWeb) {
       return Scaffold(
+        drawer: Drawer(
+          // Add a ListView to the drawer. This ensures the user can scroll
+          // through the options in the drawer if there isn't enough vertical
+          // space to fit everything.
+          child: ListView(
+            // Important: Remove any padding from the ListView.
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
+                child: Text('Drawer Header'),
+              ),
+              ListTile(
+                title: const Text('Item 1'),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('Item 2'),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ),
         backgroundColor: const Color(0xFF674CE8),
         body: Center(
           child: FractionallySizedBox(
@@ -112,8 +151,43 @@ class _EntryPointState extends State<EntryPoint> {
         body: const MainCalculatorDesktop(),
       );
     } else {
-      return const Scaffold(
-        body: MainCalculator(),
+      return Scaffold(
+        drawer: Drawer(
+          // Add a ListView to the drawer. This ensures the user can scroll
+          // through the options in the drawer if there isn't enough vertical
+          // space to fit everything.
+          child: ListView(
+            // Important: Remove any padding from the ListView.
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                ),
+                child: Text('Drawer Header'),
+              ),
+              ListTile(
+                title: const Text('Item 1'),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('Item 2'),
+                onTap: () {
+                  // Update the state of the app
+                  // ...
+                  // Then close the drawer
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        ),
+        body: const MainCalculator(),
       );
     }
   }
