@@ -68,6 +68,29 @@ class CalculatorState extends ChangeNotifier {
 
   final List<CustomAnimatedText> _allTexts = [];
 
+  final List<Question> _customUserQuestions = [];
+
+  List<Question> get customQuestions => _customUserQuestions;
+
+  get question1 =>
+      _customUserQuestions.isNotEmpty ? _customUserQuestions[0].question : '';
+
+  String _customQuestionTitle = '';
+  String _customQuestionAnswer = '';
+  double _customQuestionAnswerValue = 0.0;
+
+  set customQuestionTitle(String value) {
+    _customQuestionTitle = value;
+  }
+
+  set customQuestionAnswer(String value) {
+    _customQuestionAnswer = value;
+  }
+
+  set customQuestionAnswerValue(double value) {
+    _customQuestionAnswerValue = value;
+  }
+
   late IconData _sign;
 
   num _calculatedValue = 0;
@@ -149,12 +172,34 @@ class CalculatorState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void addNewQuestions() {
+    if (_customQuestionAnswer.isNotEmpty &&
+        _customQuestionTitle.isNotEmpty &&
+        _customQuestionAnswerValue != 0.0) {
+      if (kDebugMode) {
+        print('customQuestionAnswer added: $_customQuestionAnswer');
+      }
+      _customUserQuestions.add(
+        Question(
+          question: _customQuestionTitle,
+          answer: _customQuestionAnswer,
+          answerValue: _customQuestionAnswerValue,
+        ),
+      );
+    }
+  }
+
   void removeLastallTexts() {
+    if (_allTexts.isEmpty) {
+      return;
+    }
+
     final allInputs = getInputs();
-    if (allInputs[1].isEmpty) {
+
+    if (allInputs.length > 1 && allInputs[1].isEmpty) {
       signCount = 0;
       allTexts.removeLast();
-    } else {
+    } else if (allInputs.isNotEmpty) {
       allTexts.removeLast();
     }
     notifyListeners();
@@ -211,7 +256,9 @@ class CalculatorState extends ChangeNotifier {
     } else if (sign == LineIcons.divide) {
       //return num1 / num2;
       bool isRemainder = num1.remainder(num2) > 0;
-      dynamic result = num1.runtimeType == int && num2.runtimeType == int && isRemainder == false;
+      dynamic result = num1.runtimeType == int &&
+          num2.runtimeType == int &&
+          isRemainder == false;
       if (kDebugMode) {
         print(result);
         print(num.parse((num1 / num2).toStringAsFixed(6)));
@@ -288,7 +335,9 @@ class CalculatorState extends ChangeNotifier {
     );
 
     timer2 = Timer.periodic(const Duration(seconds: 8), (timer) {
-      if (questionCount == questions.length) {
+      List<Question> mainQuestion =
+          customQuestions.isNotEmpty ? customQuestions : questions;
+      if (questionCount == mainQuestion.length) {
         localAnimationController.reverse();
         timer2.cancel();
       } else {
@@ -301,7 +350,7 @@ class CalculatorState extends ChangeNotifier {
 
         if (questionCount > 0 &&
             questionStarted &&
-            questions[questionCount - 1].answerValue == calculatedValue) {
+            mainQuestion[questionCount - 1].answerValue == calculatedValue) {
           isCorrect = true;
           notifyListeners();
           localAnimationController.reverse();
@@ -309,7 +358,7 @@ class CalculatorState extends ChangeNotifier {
             context,
             CustomSnackBar.info(
               message:
-                  "Time is up. And you got the question right. Right Anwser is ${questions[questionCount - 1].answer} and your's is $calculatedValue. And it took you ${stopwatch.elapsed.inSeconds} seconds. Try next question.",
+                  "Time is up. And you got the question right. Right Anwser is ${mainQuestion[questionCount - 1].answer} and your's is $calculatedValue. And it took you ${stopwatch.elapsed.inSeconds} seconds. Try next question.",
               backgroundColor: Colors.green,
               textStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -323,22 +372,22 @@ class CalculatorState extends ChangeNotifier {
           );
           questionAnswered.add(
             QuestionAnswered(
-              question: questions[questionCount - 1].question,
-              answer: questions[questionCount - 1].answer,
-              answerValue: questions[questionCount - 1].answerValue,
+              question: mainQuestion[questionCount - 1].question,
+              answer: mainQuestion[questionCount - 1].answer,
+              answerValue: mainQuestion[questionCount - 1].answerValue,
               yourAnswerValue: calculatedValue,
               wonBy: 'You',
               won: true,
               timeTaken: stopwatch.elapsed.inSeconds,
               score: 5,
               questionNumber: questionCount - 1,
-              totalQuestions: questions.length,
+              totalQuestions: mainQuestion.length,
               timeTakenByOpponent: 0,
             ),
           );
         } else if (questionCount > 0 &&
             questionStarted &&
-            questions[questionCount - 1].answerValue != calculatedValue) {
+            mainQuestion[questionCount - 1].answerValue != calculatedValue) {
           isWrong = true;
           notifyListeners();
           localAnimationController.reverse();
@@ -346,7 +395,7 @@ class CalculatorState extends ChangeNotifier {
             context,
             CustomSnackBar.info(
               message:
-                  "Time is up. And you got the question wrong. Right Anwser is ${questions[questionCount - 1].answer} and your's is $calculatedValue. And it took you ${stopwatch.elapsed.inSeconds} seconds. Try next question.",
+                  "Time is up. And you got the question wrong. Right Anwser is ${mainQuestion[questionCount - 1].answer} and your's is $calculatedValue. And it took you ${stopwatch.elapsed.inSeconds} seconds. Try next question.",
               backgroundColor: Colors.red,
               textStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -360,16 +409,16 @@ class CalculatorState extends ChangeNotifier {
           );
           questionAnswered.add(
             QuestionAnswered(
-              question: questions[questionCount - 1].question,
-              answer: questions[questionCount - 1].answer,
-              answerValue: questions[questionCount - 1].answerValue,
+              question: mainQuestion[questionCount - 1].question,
+              answer: mainQuestion[questionCount - 1].answer,
+              answerValue: mainQuestion[questionCount - 1].answerValue,
               yourAnswerValue: calculatedValue,
               wonBy: 'Opponent',
               won: false,
               timeTaken: stopwatch.elapsed.inSeconds,
               score: 0,
               questionNumber: questionCount - 1,
-              totalQuestions: questions.length,
+              totalQuestions: mainQuestion.length,
               timeTakenByOpponent: 1,
             ),
           );
@@ -385,7 +434,7 @@ class CalculatorState extends ChangeNotifier {
           showTopSnackBar(
             context,
             CustomSnackBar.info(
-              message: questions[questionCount].question,
+              message: mainQuestion[questionCount].question,
               backgroundColor: const Color(0xFF9d7fff),
               textStyle: const TextStyle(
                   fontWeight: FontWeight.w600,

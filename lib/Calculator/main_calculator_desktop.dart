@@ -1,14 +1,11 @@
-import 'dart:async';
-
-import 'package:fastest_finger_calculator/Calculator/custom_text_animation.dart';
+import 'package:fastest_finger_calculator/Calculator/application/calculator_state.dart';
 import 'package:fastest_finger_calculator/Calculator/ripple_animation.dart';
 import 'package:fastest_finger_calculator/Calculator/widgets/custom_switch.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:top_snackbar_flutter/custom_snack_bar.dart';
-import 'package:top_snackbar_flutter/top_snack_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:window_size/window_size.dart';
 
 class MainCalculatorDesktop extends StatefulWidget {
   const MainCalculatorDesktop({Key? key}) : super(key: key);
@@ -18,46 +15,15 @@ class MainCalculatorDesktop extends StatefulWidget {
 }
 
 class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
-  List<CustomAnimatedText> allTexts = [];
-
-  late IconData sign;
-
-  late Timer timer;
-
-  late Timer timer2;
-
-  int signCount = 0;
-
-  // late double calculatedValue = 0;
-  num calculatedValue = 0;
-
-  bool isCalculated = false;
-
-  int questionCount = 0;
-
-  //check answer
-  bool isCorrect = false;
-  bool isWrong = false;
-  bool questionStarted = false;
-
-  Stopwatch stopwatch = Stopwatch();
-
-  List<QuestionAnswered> questionAnswered = [];
 
   @override
-  void dispose() {
-    timer.cancel();
-    timer2.cancel();
-    stopwatch.stop();
-    super.dispose();
+  void initState() {
+    setWindowTitle('Fastest Finger Calculator');
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (kDebugMode) {
-      print(MediaQuery.of(context).size.width);
-      print(MediaQuery.of(context).size.height);
-    }
     return SizedBox(
       height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
@@ -74,27 +40,30 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
               ),
               padding: const EdgeInsets.only(top: 90, left: 10, right: 18),
 
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: allTexts.toList(),
-                  ),
-                  isCalculated
-                      ? Text(
-                          calculatedValue.toString(),
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).textTheme.bodyMedium!.color,
-                          ),
-                        )
-                      : const SizedBox(),
-                ],
-              ),
+              child: Consumer<CalculatorState>(
+                  builder: (context, calculatorState, child) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: calculatorState.allTexts.toList(),
+                    ),
+                    calculatorState.isCalculated
+                        ? Text(
+                            calculatorState.calculatedValue.toString(),
+                            style: TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium!.color,
+                            ),
+                          )
+                        : const SizedBox(),
+                  ],
+                );
+              }),
             ),
           ),
           Positioned.fill(
@@ -132,19 +101,7 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
                           isPercentBtn: false,
                           showShadow: false,
                           onPressed: () {
-                            // showTopSnackBar(
-                            //   context,
-                            //   const CustomSnackBar.info(
-                            //     message:
-                            //         "There is some information. You need to do something with that",
-                            //   ),
-                            // );
-                            setState(() {
-                              allTexts.clear();
-                              calculatedValue = 0;
-                              isCalculated = false;
-                              signCount = 0;
-                            });
+                            context.read<CalculatorState>().clearAllTexts();
                           },
                         ),
                         calculatorButton(
@@ -157,29 +114,9 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
                           isPercentBtn: true,
                           showShadow: false,
                           onPressed: () {
-                            final allMath = allTexts.map((e) {
-                              if (e.text == '') {
-                                return ' ';
-                              } else {
-                                return e.text;
-                              }
-                            }).join();
-
-                            if (allMath.split(' ').length == 1) {
-                              final percent = double.parse(allMath) / 100;
-
-                              setState(() {
-                                allTexts.clear();
-                                allTexts.add(CustomAnimatedText(
-                                  text: percent.toString(),
-                                ));
-                              });
-
-                              if (kDebugMode) {
-                                print(allMath);
-                                print(percent);
-                              }
-                            }
+                            context
+                                .read<CalculatorState>()
+                                .calculatePercentage();
                           },
                         ),
                         calculatorButton(
@@ -192,23 +129,9 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
                           isPercentBtn: false,
                           showShadow: false,
                           onPressed: () {
-                            final allInputs = getInputs();
-
-                            if (kDebugMode) {
-                              print(allInputs);
-                              print(allInputs.length);
-                            }
-
-                            if (allInputs[1].isEmpty) {
-                              setState(() {
-                                signCount = 0;
-                                allTexts.removeLast();
-                              });
-                            } else {
-                              setState(() {
-                                allTexts.removeLast();
-                              });
-                            }
+                            context
+                                .read<CalculatorState>()
+                                .removeLastallTexts();
                           },
                         ),
                         calculatorButton(
@@ -433,40 +356,7 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
                           isPercentBtn: false,
                           showShadow: true,
                           onPressed: () {
-                            stopwatch.stop();
-                            final allMath = allTexts.map((e) {
-                              if (e.text == '') {
-                                return ' ';
-                              } else {
-                                return e.text;
-                              }
-                            }).join();
-
-                            final textToCalculate = allMath.split(' ');
-                            if (kDebugMode) {
-                              print(allMath);
-                              print(textToCalculate);
-                              print(textToCalculate[0]);
-                              print(textToCalculate[1]);
-                              print(num.parse(textToCalculate[0]));
-                              print(num.parse(textToCalculate[1]));
-                            }
-
-                            if (textToCalculate[0].isNotEmpty &&
-                                textToCalculate[1].isNotEmpty) {
-                              // final calculation = calculate(
-                              //     num1: double.parse(textToCalculate[0]),
-                              //     num2: double.parse(textToCalculate[1]));
-                              final calculation = calculate2(
-                                  num1: num.parse(textToCalculate[0]),
-                                  num2: num.parse(textToCalculate[1]));
-
-                              setState(() {
-                                calculatedValue = calculation;
-                                isCalculated = true;
-                                signCount = 0;
-                              });
-                            }
+                            context.read<CalculatorState>().calculatorTotal();
                           },
                         ),
                       ],
@@ -492,10 +382,7 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
-                    if (kDebugMode) {
-                      print('clicked');
-                    }
-                    startGame();
+                    context.read<CalculatorState>().startGame(context: context);
                   },
                   child: const Icon(
                     FeatherIcons.playCircle,
@@ -515,9 +402,6 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
-                    if (kDebugMode) {
-                      print('clicked');
-                    }
                     Scaffold.of(context).openDrawer();
                   },
                   child: const Icon(
@@ -557,34 +441,14 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
             ? onPressed
             : () {
                 if (isSign) {
-                  // final isSignAdded = checkIsSign();
-                  // if (kDebugMode) {
-                  //   print(signCount);
-                  // }
-                  if (signCount < 1) {
-                    setState(() {
-                      signCount++;
-                      allTexts.add(CustomAnimatedText(
-                        text: '',
-                        icon: icon,
-                      ));
-                      sign = icon!;
-                    });
-                  } else {
-                    summarizeTotal();
-                    setState(() {
-                      signCount++;
-                      allTexts.add(CustomAnimatedText(
-                        text: '',
-                        icon: icon,
-                      ));
-                      sign = icon!;
-                    });
-                  }
+                  context
+                      .read<CalculatorState>()
+                      .addAllTexts(text: '', icon: icon, isSign: isSign);
+                  context.read<CalculatorState>().setSign = icon!;
                 } else {
-                  setState(() {
-                    allTexts.add(CustomAnimatedText(text: text ?? ''));
-                  });
+                  context
+                      .read<CalculatorState>()
+                      .addAllTexts(text: text ?? '', isSign: false);
                 }
               },
         child: Container(
@@ -631,398 +495,4 @@ class _MainCalculatorDesktopState extends State<MainCalculatorDesktop> {
       ),
     );
   }
-
-  List<String> getInputs() {
-    final allMath = allTexts.map((e) {
-      if (e.text == '') {
-        return ' ';
-      } else {
-        return e.text;
-      }
-    }).join();
-
-    final textToCalculate = allMath.split(' ');
-
-    return textToCalculate;
-  }
-
-  summarizeTotal() {
-    final allMath = allTexts.map((e) {
-      if (e.text == '') {
-        return ' ';
-      } else {
-        return e.text;
-      }
-    }).join();
-
-    final textToCalculate = allMath.split(' ');
-    if (kDebugMode) {
-      print(allMath);
-      print(textToCalculate);
-      print(textToCalculate[0]);
-      print(textToCalculate[1]);
-    }
-    final calculation = calculate(
-        num1: double.parse(textToCalculate[0]),
-        num2: double.parse(textToCalculate[1]));
-
-    setState(() {
-      allTexts.clear();
-      allTexts.add(CustomAnimatedText(text: calculation.toString()));
-      //calculatedValue = calculation;
-      // isCalculated = true;
-      signCount = 0;
-    });
-  }
-
-  double calculate({required double num1, required double num2}) {
-    if (sign == FeatherIcons.x) {
-      return num1 * num2;
-    } else if (sign == FeatherIcons.minus) {
-      return num1 - num2;
-    } else if (sign == FeatherIcons.plus) {
-      return num1 + num2;
-    } else if (sign == LineIcons.divide) {
-      return num1 / num2;
-    } else {
-      return 0;
-    }
-  }
-
-  num calculate2({required num num1, required num num2}) {
-    if (sign == FeatherIcons.x) {
-      return num1 * num2;
-    } else if (sign == FeatherIcons.minus) {
-      return num1 - num2;
-    } else if (sign == FeatherIcons.plus) {
-      return num1 + num2;
-    } else if (sign == LineIcons.divide) {
-      return num1 / num2;
-    } else {
-      return 0;
-    }
-  }
-
-  final List<Question> questions = [
-    Question(
-        question:
-            '"Calculate Area Of A Square. Given side 8cm. Formular A = a^2"',
-        answer: '64cm^2',
-        answerValue: 64),
-    Question(
-        question:
-            '"Calculate Area Of A Rectangle. Given length 8cm and width 4cm. Formular A = l * w"',
-        answer: '32cm^2',
-        answerValue: 32),
-    Question(
-        question:
-            '"Calculate Area Of A Triangle. Given base 8cm and height 4cm. Formular A = 1/2 * b * h"',
-        answer: '16cm^2',
-        answerValue: 16),
-    Question(
-        question:
-            '"Calculate Area Of A Circle. Given radius 8cm. Formular A = pi * r^2"',
-        answer: '200.96cm^2',
-        answerValue: 200.96),
-    Question(
-        question:
-            '"Calculate Area Of A Trapezoid. Given base 8cm and height 4cm. Formular A = 1/2 * (b1 + b2) * h"',
-        answer: '32cm^2',
-        answerValue: 32),
-    Question(
-        question:
-            '"Calculate Area Of A Parallelogram. Given base 8cm and height 4cm. Formular A = b * h"',
-        answer: '32cm^2',
-        answerValue: 32),
-    Question(
-        question:
-            '"Calculate Area Of A Rhombus. Given base 8cm and height 4cm. Formular A = 1/2 * d1 * d2"',
-        answer: '16cm^2',
-        answerValue: 16),
-    Question(
-        question:
-            '"Calculate Area Of A Sector. Given radius 8cm and angle 90°. Formular A = 1/2 * r^2 * theta"',
-        answer: '100.53cm^2',
-        answerValue: 100.53),
-    Question(
-        question:
-            '"Calculate Area Of A Regular Polygon. Given side 8cm and number of sides 6. Formular A = 1/2 * n * s^2 * tan(180°/n)"',
-        answer: '173.21cm^2',
-        answerValue: 173.21),
-    Question(
-        question:
-            '"Calculate Area Of A Regular Polygon. Given side 8cm and number of sides 6. Formular A = 1/2 * n * s^2 * tan(180°/n)"',
-        answer: '173.21cm^2',
-        answerValue: 173.21),
-  ];
-
-  late AnimationController localAnimationController;
-
-  startGame() {
-    showTopSnackBar(
-      context,
-      const CustomSnackBar.info(
-        message:
-            "Welcome to the calculator game. You have to calculate the numbers and get the correct answer. If you get the correct answer, you will get 1 point. If you get the wrong answer, you will lose 1 point. If you get 0 points, you will lose the game. Good luck!",
-        backgroundColor: Color(0xFF9d7fff),
-      ),
-      persistent: true,
-      onAnimationControllerInit: (controller) =>
-          localAnimationController = controller,
-      onTap: () {
-        localAnimationController.reverse();
-        timer2.cancel();
-        //timer.cancel();
-        stopwatch.reset();
-        stopwatch.stop();
-        setState(() {
-          questionStarted = false;
-          questionCount = 0;
-          isCorrect = false;
-          isWrong = false;
-        });
-      },
-    );
-
-    //timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    // if (timer.tick == 60) {
-    //   timer.cancel();
-    //   if (score == 0) {
-    //     showTopSnackBar(
-    //       context,
-    //       const CustomSnackBar.error(
-    //         message: "You lost the game. Try again!",
-    //         backgroundColor: Color(0xFF9d7fff),
-    //       ),
-    //     );
-    //   } else {
-    //     showTopSnackBar(
-    //       context,
-    //       const CustomSnackBar.success(
-    //         message: "You won the game. Congratulations!",
-    //         backgroundColor: Color(0xFF9d7fff),
-    //       ),
-    //     );
-    //   }
-    // }
-    //});
-
-    timer2 = Timer.periodic(const Duration(seconds: 7), (timer) {
-      if (questionCount == questions.length) {
-        localAnimationController.reverse();
-        timer2.cancel();
-      } else {
-        // setState(() {
-        //   questionStarted = true;
-        // });
-
-        if (kDebugMode) {
-          print(questionStarted);
-          print(questionCount);
-          print(questions[questionCount].answerValue);
-          print(calculatedValue);
-        }
-
-        if (questionCount > 0 &&
-            questionStarted &&
-            questions[questionCount - 1].answerValue == calculatedValue) {
-          setState(() {
-            isCorrect = true;
-          });
-          localAnimationController.reverse();
-          showTopSnackBar(
-            context,
-            CustomSnackBar.info(
-              message:
-                  "Time is up. And you got the question right. Right Anwser is ${questions[questionCount - 1].answer} and your's is $calculatedValue. And it took you ${stopwatch.elapsed.inSeconds} seconds. Try next question.",
-              backgroundColor: Colors.green,
-            ),
-            persistent: true,
-            onAnimationControllerInit: (controller) =>
-                localAnimationController = controller,
-          );
-          questionAnswered.add(
-            QuestionAnswered(
-              question: questions[questionCount - 1].question,
-              answer: questions[questionCount - 1].answer,
-              answerValue: questions[questionCount - 1].answerValue,
-              yourAnswerValue: calculatedValue,
-              wonBy: 'You',
-              won: true,
-              timeTaken: stopwatch.elapsed.inSeconds,
-              score: 5,
-              questionNumber: questionCount - 1,
-              totalQuestions: questions.length,
-              timeTakenByOpponent: 0,
-            ),
-          );
-        } else if (questionCount > 0 &&
-            questionStarted &&
-            questions[questionCount - 1].answerValue != calculatedValue) {
-          setState(() {
-            isWrong = true;
-          });
-          localAnimationController.reverse();
-          showTopSnackBar(
-            context,
-            CustomSnackBar.info(
-              message:
-                  "Time is up. And you got the question wrong. Right Anwser is ${questions[questionCount - 1].answer} and your's is $calculatedValue. And it took you ${stopwatch.elapsed.inSeconds} seconds. Try next question.",
-              backgroundColor: Colors.red,
-            ),
-            persistent: true,
-            onAnimationControllerInit: (controller) =>
-                localAnimationController = controller,
-          );
-          questionAnswered.add(
-            QuestionAnswered(
-              question: questions[questionCount - 1].question,
-              answer: questions[questionCount - 1].answer,
-              answerValue: questions[questionCount - 1].answerValue,
-              yourAnswerValue: calculatedValue,
-              wonBy: 'Opponent',
-              won: false,
-              timeTaken: stopwatch.elapsed.inSeconds,
-              score: 0,
-              questionNumber: questionCount - 1,
-              totalQuestions: questions.length,
-              timeTakenByOpponent: 1,
-            ),
-          );
-        }
-
-        if (kDebugMode) {
-          print('isCorrect 1: $isCorrect');
-          print('isWrong 2: $isWrong');
-        }
-
-        Future.delayed(const Duration(seconds: 2), () {
-          localAnimationController.reverse();
-          setState(() {
-            isCorrect = false;
-            isWrong = false;
-          });
-
-          if (kDebugMode) {
-            print('isCorrect: $isCorrect');
-            print('isWrong: $isWrong');
-          }
-
-          showTopSnackBar(
-            context,
-            CustomSnackBar.info(
-              message: questions[questionCount].question,
-              backgroundColor: const Color(0xFF9d7fff),
-            ),
-            persistent: true,
-            onAnimationControllerInit: (controller) =>
-                localAnimationController = controller,
-            onTap: () {
-              localAnimationController.reverse();
-              timer2.cancel();
-              //timer.cancel();
-              stopwatch.reset();
-              stopwatch.stop();
-              setState(() {
-                questionStarted = false;
-                questionCount = 0;
-                isCorrect = false;
-                isWrong = false;
-              });
-            },
-          );
-
-          stopwatch.reset();
-          stopwatch.start();
-
-          setState(() {
-            isCorrect = false;
-            isWrong = false;
-            questionCount++;
-            questionStarted = true;
-          });
-        });
-
-        // Future.delayed(const Duration(seconds: 1));
-        // localAnimationController.reverse();
-        // // isCorrect = false;
-        // // isWrong = false;
-
-        // if (kDebugMode) {
-        //   print('isCorrect: $isCorrect');
-        //   print('isWrong: $isWrong');
-        // }
-
-        // showTopSnackBar(
-        //   context,
-        //   CustomSnackBar.info(
-        //     message: questions[questionCount].question,
-        //     backgroundColor: isCorrect
-        //         ? Colors.green
-        //         : isWrong
-        //             ? Colors.red
-        //             : const Color(0xFF9d7fff),
-        //   ),
-        //   persistent: true,
-        //   onAnimationControllerInit: (controller) =>
-        //       localAnimationController = controller,
-        // );
-
-        // setState(() {
-        //   isCorrect = false;
-        //   isWrong = false;
-        //   questionCount++;
-        //   questionStarted = true;
-        // });
-      }
-    });
-
-    // showTopSnackBar(
-    //   context,
-    //   const CustomSnackBar.info(
-    //     message: "Calculate Area Of A Square. Given side 8cm. Formular A = a^2",
-    //     backgroundColor: Color(0xFF9d7fff),
-    //   ),
-    // );
-  }
-}
-
-class Question {
-  final String question;
-  final String answer;
-  final num answerValue;
-
-  Question({
-    required this.question,
-    required this.answer,
-    required this.answerValue,
-  });
-}
-
-class QuestionAnswered {
-  final String question;
-  final String answer;
-  final num answerValue;
-  final num yourAnswerValue;
-  final String wonBy;
-  final bool won;
-  final int timeTaken;
-  final int score;
-  final int questionNumber;
-  final int totalQuestions;
-  final int timeTakenByOpponent;
-
-  QuestionAnswered({
-    required this.question,
-    required this.answer,
-    required this.answerValue,
-    required this.yourAnswerValue,
-    required this.wonBy,
-    required this.won,
-    required this.timeTaken,
-    required this.score,
-    required this.questionNumber,
-    required this.totalQuestions,
-    required this.timeTakenByOpponent,
-  });
 }

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math show sqrt;
 
@@ -71,9 +70,6 @@ class _RippleAnimationState extends State<RippleAnimation>
       ),
       child: GestureDetector(
         onTap: () {
-          if (kDebugMode) {
-            print('tapped');
-          }
           widget.onTap();
           _controller.forward(from: 0.0);
         },
