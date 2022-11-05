@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeState>(builder: (context, themeState, child) {
       return MaterialApp(
-        title: 'Flutter Demo',
+        title: 'Fastest Finger App',
         theme: themeState.isDark ? themeDark : themeLight,
         //darkTheme: themeDark,
         //themeMode: ThemeMode.system,
